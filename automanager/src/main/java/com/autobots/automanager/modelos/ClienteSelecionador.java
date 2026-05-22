@@ -4,13 +4,13 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.autobots.automanager.entidades.Cliente;
+import com.autobots.automanager.entidades.Usuario;
 
 @Component
 public class ClienteSelecionador {
-	public Cliente selecionar(List<Cliente> clientes, long id) {
-		Cliente selecionado = null;
-		for (Cliente cliente : clientes) {
+	public Usuario selecionar(List<Usuario> clientes, long id) {
+		Usuario selecionado = null;
+		for (Usuario cliente : clientes) {
 			if (cliente.getId() == id) {
 				selecionado = cliente;
 			}

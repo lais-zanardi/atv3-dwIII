@@ -1,7 +1,10 @@
 package com.autobots.automanager;
 
-import java.util.Calendar;
-
+import com.autobots.automanager.entidades.Usuario;
+import com.autobots.automanager.entidades.Documento;
+import com.autobots.automanager.entidades.Endereco;
+import com.autobots.automanager.entidades.Telefone;
+import com.autobots.automanager.repositorios.UsuarioRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -9,11 +12,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Component;
 
-import com.autobots.automanager.entidades.Cliente;
-import com.autobots.automanager.entidades.Documento;
-import com.autobots.automanager.entidades.Endereco;
-import com.autobots.automanager.entidades.Telefone;
-import com.autobots.automanager.repositorios.ClienteRepositorio;
+import java.util.Calendar;
 
 @SpringBootApplication
 public class AutomanagerApplication {
@@ -25,17 +24,17 @@ public class AutomanagerApplication {
 	@Component
 	public static class Runner implements ApplicationRunner {
 		@Autowired
-		public ClienteRepositorio repositorio;
+		public UsuarioRepositorio repositorio;
 
 		@Override
 		public void run(ApplicationArguments args) throws Exception {
 			Calendar calendario = Calendar.getInstance();
 			calendario.set(2002, 05, 15);
 
-			Cliente cliente = new Cliente();
+			Usuario cliente = new Usuario();
 			cliente.setNome("Pedro AlcÃ¢ntara de BraganÃ§a e Bourbon");
-			cliente.setDataCadastro(Calendar.getInstance().getTime());
-			cliente.setDataNascimento(calendario.getTime());
+//			cliente.setDataCadastro(Calendar.getInstance().getTime());
+//			cliente.setDataNascimento(calendario.getTime());
 			cliente.setNomeSocial("Dom Pedro");
 
 			Telefone telefone = new Telefone();
