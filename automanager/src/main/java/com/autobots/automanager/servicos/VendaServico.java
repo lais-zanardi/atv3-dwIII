@@ -10,13 +10,25 @@ import java.util.List;
 
 @Service
 public class VendaServico {
-    @Autowired private VendaRepositorio repositorio;
+
+    @Autowired
+    private VendaRepositorio repositorio;
+
     @Autowired
     private VendaAtualizador atualizador;
 
-    public Venda salvar(Venda venda) { return repositorio.save(venda); }
-    public List<Venda> obterTodas() { return repositorio.findAll(); }
-    public Venda obterPorId(Long id) { return repositorio.findById(id).orElse(null); }
+    public Venda salvar(Venda venda) {
+        return repositorio.save(venda);
+    }
+
+    public List<Venda> obterTodas() {
+        return repositorio.findAll();
+    }
+
+    public Venda obterPorId(Long id) {
+        return repositorio.findById(id).orElse(null);
+    }
+
     public Venda atualizar(Venda atualizacao) {
         Venda alvo = obterPorId(atualizacao.getId());
         if (alvo != null) {
@@ -25,5 +37,8 @@ public class VendaServico {
         }
         return null;
     }
-    public void excluir(Long id) { repositorio.deleteById(id); }
+
+    public void excluir(Long id) {
+        repositorio.deleteById(id);
+    }
 }

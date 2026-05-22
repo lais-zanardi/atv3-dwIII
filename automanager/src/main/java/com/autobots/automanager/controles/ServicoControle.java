@@ -1,6 +1,9 @@
 package com.autobots.automanager.controles;
 
+import com.autobots.automanager.dtos.requisicao.ServicoRequisicaoDTO;
+import com.autobots.automanager.dtos.resposta.ServicoRespostaDTO;
 import com.autobots.automanager.entidades.Servico;
+import com.autobots.automanager.mapeador.ServicoMapeador;
 import com.autobots.automanager.modelos.AdicionadorLinkServico;
 import com.autobots.automanager.servicos.ServicoServico;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,47 +12,66 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/servicos")
 public class ServicoControle {
+
     @Autowired private ServicoServico servicoServico;
-    @Autowired
-    private AdicionadorLinkServico adicionadorLink;
+    @Autowired private ServicoMapeador mapeador;
+    @Autowired private AdicionadorLinkServico adicionadorLink;
 
     @PostMapping("/cadastrar")
-    public ResponseEntity<Servico> cadastrarServico(@RequestBody Servico servico) {
-        Servico salvo = servicoServico.salvar(servico);
-        adicionadorLink.adicionarLink(salvo);
-        return new ResponseEntity<>(salvo, HttpStatus.CREATED);
+    public ResponseEntity<ServicoRespostaDTO> cadastrarServico(@RequestBody ServicoRequisicaoDTO requisicao) {
+        Servico entidade = mapeador.requisicaoParaEntidade(requisicao);
+        Servico salvo = servicoServico.salvar(entidade);
+        ServicoRespostaDTO resposta = mapeador.entidadeParaResposta(salvo);
+        adicionadorLink.adicionarLink(resposta);
+        return new ResponseEntity<>(resposta, HttpStatus.CREATED);
     }
 
     @GetMapping("/obter")
-    public ResponseEntity<List<Servico>> obterServicos() {
+    public ResponseEntity<List<ServicoRespostaDTO>> obterServicos() {
         List<Servico> servicos = servicoServico.obterTodos();
-        adicionadorLink.adicionarLink(servicos);
-        return new ResponseEntity<>(servicos, HttpStatus.FOUND);
+        List<ServicoRespostaDTO> respostas = servicos.stream()
+                .map(mapeador::entidadeParaResposta)
+                .collect(Collectors.toList());
+        adicionadorLink.adicionarLink(respostas);
+        return new ResponseEntity<>(respostas, HttpStatus.FOUND);
     }
 
     @GetMapping("/obter/{id}")
-    public ResponseEntity<Servico> obterServico(@PathVariable Long id) {
+    public ResponseEntity<ServicoRespostaDTO> obterServico(@PathVariable Long id) {
         Servico servico = servicoServico.obterPorId(id);
-        if (servico == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        adicionadorLink.adicionarLink(servico);
-        return new ResponseEntity<>(servico, HttpStatus.FOUND);
+        if (servico == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        ServicoRespostaDTO resposta = mapeador.entidadeParaResposta(servico);
+        adicionadorLink.adicionarLink(resposta);
+        return new ResponseEntity<>(resposta, HttpStatus.FOUND);
     }
 
-    @PutMapping("/atualizar")
-    public ResponseEntity<Servico> atualizarServico(@RequestBody Servico servico) {
-        Servico atualizado = servicoServico.atualizar(servico);
-        if (atualizado == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        adicionadorLink.adicionarLink(atualizado);
-        return new ResponseEntity<>(atualizado, HttpStatus.OK);
+    @PutMapping("/atualizar/{id}")
+    public ResponseEntity<ServicoRespostaDTO> atualizarServico(@PathVariable Long id, @RequestBody ServicoRequisicaoDTO requisicao) {
+        Servico atualizacao = mapeador.requisicaoParaEntidade(requisicao);
+        atualizacao.setId(id);
+
+        Servico atualizado = servicoServico.atualizar(atualizacao);
+        if (atualizado == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        ServicoRespostaDTO resposta = mapeador.entidadeParaResposta(atualizado);
+        adicionadorLink.adicionarLink(resposta);
+        return new ResponseEntity<>(resposta, HttpStatus.OK);
     }
 
     @DeleteMapping("/excluir/{id}")
     public ResponseEntity<?> excluirServico(@PathVariable Long id) {
-        if (servicoServico.obterPorId(id) == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if (servicoServico.obterPorId(id) == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         servicoServico.excluir(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }

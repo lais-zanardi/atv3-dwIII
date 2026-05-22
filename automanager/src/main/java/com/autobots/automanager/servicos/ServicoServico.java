@@ -10,13 +10,25 @@ import java.util.List;
 
 @Service
 public class ServicoServico {
+
     @Autowired
     private ServicoRepositorio repositorio;
-    @Autowired private ServicoAtualizador atualizador;
 
-    public Servico salvar(Servico servico) { return repositorio.save(servico); }
-    public List<Servico> obterTodos() { return repositorio.findAll(); }
-    public Servico obterPorId(Long id) { return repositorio.findById(id).orElse(null); }
+    @Autowired
+    private ServicoAtualizador atualizador;
+
+    public Servico salvar(Servico servico) {
+        return repositorio.save(servico);
+    }
+
+    public List<Servico> obterTodos() {
+        return repositorio.findAll();
+    }
+
+    public Servico obterPorId(Long id) {
+        return repositorio.findById(id).orElse(null);
+    }
+
     public Servico atualizar(Servico atualizacao) {
         Servico alvo = obterPorId(atualizacao.getId());
         if (alvo != null) {
@@ -25,5 +37,8 @@ public class ServicoServico {
         }
         return null;
     }
-    public void excluir(Long id) { repositorio.deleteById(id); }
+
+    public void excluir(Long id) {
+        repositorio.deleteById(id);
+    }
 }
