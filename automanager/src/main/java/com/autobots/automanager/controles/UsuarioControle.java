@@ -1,6 +1,9 @@
 package com.autobots.automanager.controles;
 
+import com.autobots.automanager.dtos.requisicao.UsuarioRequisicaoDTO;
+import com.autobots.automanager.dtos.resposta.UsuarioRespostaDTO;
 import com.autobots.automanager.entidades.Usuario;
+import com.autobots.automanager.mapeador.UsuarioMapeador;
 import com.autobots.automanager.modelos.AdicionadorLinkUsuario;
 import com.autobots.automanager.servicos.UsuarioServico;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,47 +12,65 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioControle {
-	@Autowired
-	private UsuarioServico servico;
+
+	@Autowired private UsuarioServico servico;
+	@Autowired private UsuarioMapeador mapeador;
 	@Autowired private AdicionadorLinkUsuario adicionadorLink;
 
 	@PostMapping("/cadastrar")
-	public ResponseEntity<Usuario> cadastrarUsuario(@RequestBody Usuario usuario) {
-		Usuario salvo = servico.salvar(usuario);
-		adicionadorLink.adicionarLink(salvo);
-		return new ResponseEntity<>(salvo, HttpStatus.CREATED);
+	public ResponseEntity<UsuarioRespostaDTO> cadastrarUsuario(@RequestBody UsuarioRequisicaoDTO requisicao) {
+		Usuario entidade = mapeador.requisicaoParaEntidade(requisicao);
+		Usuario salvo = servico.salvar(entidade);
+		UsuarioRespostaDTO resposta = mapeador.entidadeParaResposta(salvo);
+		adicionadorLink.adicionarLink(resposta);
+		return new ResponseEntity<>(resposta, HttpStatus.CREATED);
 	}
 
 	@GetMapping("/obter")
-	public ResponseEntity<List<Usuario>> obterUsuarios() {
+	public ResponseEntity<List<UsuarioRespostaDTO>> obterUsuarios() {
 		List<Usuario> usuarios = servico.obterTodos();
-		adicionadorLink.adicionarLink(usuarios);
-		return new ResponseEntity<>(usuarios, HttpStatus.FOUND);
+		List<UsuarioRespostaDTO> respostas = usuarios.stream()
+				.map(mapeador::entidadeParaResposta)
+				.collect(Collectors.toList());
+		adicionadorLink.adicionarLink(respostas);
+		return new ResponseEntity<>(respostas, HttpStatus.FOUND);
 	}
 
 	@GetMapping("/obter/{id}")
-	public ResponseEntity<Usuario> obterUsuario(@PathVariable Long id) {
+	public ResponseEntity<UsuarioRespostaDTO> obterUsuario(@PathVariable Long id) {
 		Usuario usuario = servico.obterPorId(id);
-		if (usuario == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		adicionadorLink.adicionarLink(usuario);
-		return new ResponseEntity<>(usuario, HttpStatus.FOUND);
+		if (usuario == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		UsuarioRespostaDTO resposta = mapeador.entidadeParaResposta(usuario);
+		adicionadorLink.adicionarLink(resposta);
+		return new ResponseEntity<>(resposta, HttpStatus.FOUND);
 	}
 
-	@PutMapping("/atualizar")
-	public ResponseEntity<Usuario> atualizarUsuario(@RequestBody Usuario usuario) {
-		Usuario atualizado = servico.atualizar(usuario);
-		if (atualizado == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		adicionadorLink.adicionarLink(atualizado);
-		return new ResponseEntity<>(atualizado, HttpStatus.OK);
+	@PutMapping("/atualizar/{id}")
+	public ResponseEntity<UsuarioRespostaDTO> atualizarUsuario(@PathVariable Long id, @RequestBody UsuarioRequisicaoDTO requisicao) {
+		Usuario atualizacao = mapeador.requisicaoParaEntidade(requisicao);
+		atualizacao.setId(id);
+		Usuario atualizado = servico.atualizar(atualizacao);
+		if (atualizado == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+
+		UsuarioRespostaDTO resposta = mapeador.entidadeParaResposta(atualizado);
+		adicionadorLink.adicionarLink(resposta);
+		return new ResponseEntity<>(resposta, HttpStatus.OK);
 	}
 
 	@DeleteMapping("/excluir/{id}")
 	public ResponseEntity<?> excluirUsuario(@PathVariable Long id) {
-		if (servico.obterPorId(id) == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		if (servico.obterPorId(id) == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 		servico.excluir(id);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
